@@ -1,0 +1,10 @@
+name = "SortedList"
+version = "0.1.0"
+defaultTargets = ["sortedlist"]
+
+[[lean_lib]]
+name = "SortedList"
+
+[[lean_exe]]
+name = "sortedlist"
+root = "Main"
