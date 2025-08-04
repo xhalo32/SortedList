@@ -110,3 +110,10 @@ theorem Sorted.mergeSort (l : List Int) : Sorted (l.mergeSort) := by
   have := sorted_mergeSort (le := fun (x y : Int) => decide (x ≤ y))
   simp_all
   exact this @Int.le_trans @Int.le_total _
+
+
+theorem append_sorted_of_forall_le (hxs : xs.Sorted) (hys : (y :: ys).Sorted) (h : ∀ (a : Int), a ∈ xs → a ≤ y) : (xs ++ (y :: ys)).Sorted := by
+  rw [Sorted]
+  rw [pairwise_append]
+  simp_all
+  grind
