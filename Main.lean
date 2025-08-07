@@ -2,6 +2,8 @@ import SortedList.SortedList
 
 open IO
 
+-- #eval [1,2,3,4].unique
+
 def main : IO Unit := do
   let stdin ← IO.getStdin
   while true do
@@ -23,7 +25,7 @@ def main : IO Unit := do
 
       -- Sort the list
       let sorted_list := list.sort
-      println s!"Your input (sorted): {sorted_list.1}"
+      println s!"Your input (sorted): {sorted_list.val}"
 
       -- Get the unique elements
       let unique_elems := sorted_list.unique

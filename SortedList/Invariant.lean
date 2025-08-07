@@ -21,7 +21,7 @@ theorem reverse_spec_length (l : List Int) :
   mvcgen [reverse]
   case inv =>
     -- Loop invariant: `out` has the same number of elements as were in the prefix before the loop
-    exact ⇓⟨out, xs⟩ => ⌜ xs.rpref.length = out.length ⌝
+    exact ⇓⟨out, xs⟩ => ⌜ xs.pref.length = out.length ⌝
 
   all_goals simp_all
 
@@ -32,7 +32,7 @@ theorem reverse_spec (l : List Int) :
   case inv =>
     -- Loop invariant: `out` has the same number of elements as were in the prefix before the loop
     exact ⇓⟨out, xs⟩ => ⌜ xs.pref.length = out.length ∧
-      ∀ n : Fin (xs.pref.length), out[n]? = xs.pref.reverse[n] -- "induction hypothesis": the processed list has the desired property. Note: xs.rpref can be used instead of pref.reverse
+      ∀ n : Fin (xs.rpref.length), out[n]? = xs.pref.reverse[n] -- "induction hypothesis": the processed list has the desired property. Note: xs.rpref can be used instead of pref.reverse
       ⌝
 
   all_goals simp_all
@@ -50,7 +50,7 @@ theorem reverse_spec (l : List Int) :
     obtain ⟨h1, h2⟩ := h
     simp
 
-    simp [List.length_reverse, List.length_cons, Nat.lt_succ_iff_lt_or_eq] at hn
+    simp [Nat.lt_succ_iff_lt_or_eq] at hn
     rcases hn with hn | hn
     ·
       simp [List.getElem_cons]

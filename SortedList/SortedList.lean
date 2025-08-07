@@ -4,7 +4,7 @@ import SortedList.Unique
 Now let's define List.sort for sorting a list and providing a proof that it is sorted
 -/
 
-def SortedList := Subtype List.Sorted
+def SortedList := { l : List Int // l.Sorted }
 
 namespace SortedList
 open List
@@ -83,7 +83,7 @@ def cons'.sorted (x : Int) (xs : SortedList) : Sorted (cons' x xs) := by
 def cons (x : Int) (xs : SortedList) : SortedList := ⟨insert x xs.1, cons'.sorted _ _⟩
 
 /-- Given a `SortedList`, returns the list of its unique elements. -/
-def unique (l : SortedList) : List Int := l.1.unique l.2
+def unique (l : SortedList) : List Int := l.val.unique l.property
 
 end SortedList
 

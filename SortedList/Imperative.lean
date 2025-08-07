@@ -11,8 +11,8 @@ set_option mvcgen.warning false
 
 /-- (Locally) imperative version of the functional `unique` function. -/
 def unique (xs : List Int) : Id (List Int) := do
-  let mut c := none
-  let mut out := []
+  let mut c : Option Int := none -- previous x in the list
+  let mut out := [] -- output of the function
 
   for x in xs do
     if some x != c then
@@ -20,6 +20,8 @@ def unique (xs : List Int) : Id (List Int) := do
       c := some x
 
   out
+
+#print unique
 
 #eval unique [1, 1, 2, 2, 3]
 
@@ -47,7 +49,7 @@ theorem unique_spec_strictSorted (l : List Int) :
     exact ⇓⟨⟨c, out⟩, xs⟩ =>
       ⌜
         (∀ x ∈ out, x ≤ c) ∧ -- out ≤ c
-        (∀ x ∈ xs.suff, c ≤ x) ∧ -- c is always ≤ the rest of the input
+        (∀ x ∈ xs.suff, c ≤ x) ∧ -- c is always ≤ the rest of the input (i.e. suffix)
         StrictSorted out -- property holds for out
       ⌝
 
@@ -88,7 +90,8 @@ theorem unique_spec_nodup (l : List Int) :
   apply SPred.entails.trans (unique_spec_strictSorted l) StrictSorted.nodup hl
 
 /-- The key property that `unique` must have: Every element in the input is in the output and the output is strictly increasing (or equivalently, doesn't contain duplicates and is sorted). -/
-theorem unique_spec (l : List Int) : ⦃⌜Sorted l⌝⦄ unique l ⦃⇓r => l ⊆ r ∧ StrictSorted r⦄ := by
+theorem unique_spec (l : List Int) :
+    ⦃⌜Sorted l⌝⦄ unique l ⦃⇓r => l ⊆ r ∧ StrictSorted r⦄ := by
   intro hl
   apply SPred.Tactic.ProofMode.start_entails
   apply SPred.and_intro

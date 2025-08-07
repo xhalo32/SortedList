@@ -20,9 +20,10 @@ def Sorted.decide (xs : List Int) : Decidable (Sorted xs) := match xs with
   else
     .isFalse (not_cons_of_not_le hxy)
 
--- The fact that any Pairwise property is decidable is already proven in Lean
-def Sorted.decide' (xs : List Int) : Decidable (Sorted xs) := instDecidablePairwise xs
+-- The above fact is already proved in the Lean standard library
+example (xs : List Int) : Decidable (Sorted xs) := instDecidablePairwise xs
 
+-- Therefore the following instance is redundant
 instance {xs : List Int} : Decidable (Sorted xs) := Sorted.decide xs
 
 -- What lean computes here is not merely a boolean, but a complete **proof object**,
@@ -37,7 +38,12 @@ theorem Sorted.not_tail_of_le (h : ¬(x :: y :: xs).Sorted) (hxy : x ≤ y) : ¬
   apply h
   exact cons ‹_› ‹_›
 
-/-- Computes the index of the first out of order element. -/
+/-- Computes the index of the first out of order element.
+
+Requires a proof that the list is not sorted.
+
+For example, for the list `[1, 2, 1]`, the index computed is 2.
+-/
 def Sorted.not_sorted_idx (h : ¬ Sorted xs) : Nat := match xs with
   | [] => nomatch h
   | [_x] => by
@@ -46,4 +52,10 @@ def Sorted.not_sorted_idx (h : ¬ Sorted xs) : Nat := match xs with
     if hxy : x ≤ y then
       1 + Sorted.not_sorted_idx (Sorted.not_tail_of_le h hxy)
     else
-      0
+      1
+
+
+-- `by decide` is used to prove that `¬ Sorted [1, 0]` using decidability.
+example : @Sorted.not_sorted_idx [1, 0] (by decide) = 1 := rfl
+
+example : @Sorted.not_sorted_idx [1, 2, 1] (by decide) = 2 := rfl
