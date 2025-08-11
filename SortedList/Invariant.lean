@@ -4,7 +4,7 @@ open Std Do
 
 set_option mvcgen.warning false
 
-def reverse (xs : List Int) : Id (List Int) := do
+def reverse (xs : List α) : Id (List α) := do
   let mut out := []
 
   for x in xs do
@@ -12,11 +12,10 @@ def reverse (xs : List Int) : Id (List Int) := do
 
   return out
 
-#eval reverse [1, 2, 3]
+#eval reverse [1, 2, 3, 4, 5]
 
-#check List.mapIdx
 -- Property of being reversed: the length is the same
-theorem reverse_spec_length (l : List Int) :
+theorem reverse_spec_length (l : List α) :
     ⦃⌜True⌝⦄ reverse l ⦃⇓r => r.length = l.length ⦄ := by
   mvcgen [reverse]
   case inv =>
@@ -26,8 +25,8 @@ theorem reverse_spec_length (l : List Int) :
   all_goals simp_all
 
 -- Property of being reversed: the index of each element is reversed
-theorem reverse_spec (l : List Int) :
-    ⦃⌜True⌝⦄ reverse l ⦃⇓r => ∀ n : Fin (l.length), r[n]? = l[l.length - 1 - n] ⦄ := by
+theorem reverse_spec (l : List α) :
+    ⦃⌜True⌝⦄ reverse l ⦃⇓r => ∀ i : Fin (l.length), r[i]? = l[l.length - 1 - i] ⦄ := by
   mvcgen [reverse]
   case inv =>
     -- Loop invariant: `out` has the same number of elements as were in the prefix before the loop
