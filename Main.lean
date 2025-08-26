@@ -1,6 +1,7 @@
 import SortedList.SortedList
 
 open IO
+open SortedList
 
 -- #eval [1,2,3,4].unique
 
@@ -10,12 +11,12 @@ def main : IO Unit := do
     -- Read a list of integers from the stdin
     let line ← stdin.getLine
     let list := Int.ofNat <$> String.toNat! <$> (line |>.stripSuffix "\n" |>.split (· == ' '))
-    println s!"Your input: {repr list}"
+    println s!"Your input: {list}"
 
     -- Use the fact that Sorted is decidable
     if h : list.Sorted then
       -- In this branch `h` is a proof of `list.Sorted`.
-      let unique_elems := list.unique h
+      let unique_elems := unique ⟨list, h⟩
       println s!"Unique elements: {unique_elems}"
 
     else
@@ -28,5 +29,5 @@ def main : IO Unit := do
       println s!"Your input (sorted): {sorted_list.val}"
 
       -- Get the unique elements
-      let unique_elems := sorted_list.unique
+      let unique_elems := unique sorted_list
       println s!"Unique elements: {unique_elems}"
