@@ -1,6 +1,6 @@
 name = "SortedList"
 version = "0.1.0"
-defaultTargets = ["sortedlist"]
+defaultTargets = ["main"]
 
 [[lean_lib]]
 name = "SortedList"
