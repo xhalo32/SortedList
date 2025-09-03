@@ -237,3 +237,34 @@ def main : IO Unit := do
       -- Get the unique elements
       let unique_elems : SortedList := sorted_list.unique
       println s!"Unique elements: {unique_elems}"
+
+def main_live_example : IO Unit := do
+  let list := [0, 2, 1, 3, 1, 0]
+  println s!"Your input: {list}"
+
+  -- Use the fact that Sorted is decidable
+  if h : list.Sorted then
+    -- In this branch `h` is a proof of `list.Sorted`.
+    let unique_elems : SortedList := SortedList.unique ⟨list, h⟩
+    println s!"Unique elements: {unique_elems}"
+
+  else
+    -- And here `h` is a proof of `¬ list.Sorted`.
+    let idx := List.Sorted.not_sorted_idx h
+    println s!"Input was not sorted at index {idx}"
+
+    -- Sort the list
+    let sorted_list := list.sort
+    println s!"Your input (sorted): {sorted_list.val}"
+
+    -- Get the unique elements
+    let unique_elems : SortedList := sorted_list.unique
+    println s!"Unique elements: {unique_elems}"
+
+#eval main_live_example
+/-
+Your input: [0, 2, 1, 3, 1, 0]
+Input was not sorted at index 2
+Your input (sorted): [0, 0, 1, 1, 2, 3]
+Unique elements: [0, 1, 2, 3]
+-/

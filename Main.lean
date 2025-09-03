@@ -3,8 +3,6 @@ import SortedList.SortedList
 open IO
 open SortedList
 
--- #eval [1,2,3,4].unique
-
 def main : IO Unit := do
   let stdin ← IO.getStdin
   while true do
