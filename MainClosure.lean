@@ -1,16 +1,12 @@
--- Tested on Lean 4 v4.22-rc4
-
 import Std.Tactic.Do
-import SortedList.Specification
 
 open Std Do List
 
-set_option mvcgen.warning false
+/-- Given a list, returns the list of its unique elements **assuming** the list is in order.
 
--- Inspiration: <https://markushimmel.de/blog/my-first-verified-imperative-program/>
-
-/-- (Locally) imperative version of the functional `unique` function. -/
-def unique (xs : List Int) : List Int := Id.run do
+Use `SortedList` API instead: `SortedList.unique : SortedList → SortedList`.
+-/
+private def unique (xs : List Int) : List Int := Id.run do
   let mut c : Option Int := none -- previous x in the list
   let mut out := [] -- output of the function
 
@@ -21,9 +17,26 @@ def unique (xs : List Int) : List Int := Id.run do
 
   out
 
-#print unique
 
-#eval unique [1, 1, 2, 2, 3]
+namespace List
+
+/-- A list is `Sorted` when it is pairwise in a ≤-relation.
+
+For example `Sorted [1, 2, 3]` is equivalent with `(1 ≤ 2 ∧ 1 ≤ 3) ∧ 2 ≤ 3`.
+Here `2 ≤ 3` comes from the requirement that the tail is sorted: `Sorted [2, 3] ↔ 2 ≤ 3`.
+-/
+abbrev Sorted (l : List Int) := Pairwise (· ≤ ·) l
+
+/-- The key properties that a `unique` function must have together defines its specification. -/
+structure UniqueSpec (unique : List Int → List Int) where
+  /-- Every element in the input is in the output -/
+  supset : ∀ l, l ⊆ unique l
+  /-- Every element in the output is in the input -/
+  subset : ∀ l, unique l ⊆ l
+  /-- The output is sorted if the input is sorted -/
+  sorted_if_sorted : ∀ l, (Sorted l) → Sorted (unique l)
+  /-- The output contains no duplicates if the input is sorted -/
+  nodup_if_sorted : ∀ l, (Sorted l) → Nodup (unique l)
 
 theorem unique_spec_supset (l : List Int) : l ⊆ unique l := by
   generalize h : unique l = r
@@ -130,3 +143,86 @@ theorem unique_spec : UniqueSpec unique := by
   · intro hl
     apply StrictSorted.nodup
     exact unique_spec_strictSorted l hl
+end List
+
+abbrev SortedList := { l : List Int // l.Sorted }
+
+/-- For a sorted list of integers, returns a sorted list of its unique elements.
+
+This is the "refined" version of the `unique` function.
+-/
+def SortedList.unique (l : SortedList) : SortedList := ⟨_root_.unique l.val, unique_spec.sorted_if_sorted _ l.property⟩
+
+/-- `List.mergeSort` returns a `Sorted` list -/
+theorem Sorted.mergeSort (l : List Int) : Sorted (l.mergeSort) := by
+  have := sorted_mergeSort (le := fun (x y : Int) => decide (x ≤ y))
+  simp_all
+  exact this @Int.le_trans @Int.le_total _
+
+namespace List
+
+def sort (l : List Int) : SortedList := ⟨l.mergeSort, Sorted.mergeSort l⟩
+
+-- Now a couple of lemmas about `Sorted`.
+
+theorem Pairwise.cons_of_trans {R : α → α → Prop} (R_trans : ∀ {a b c}, R a b → R b c → R a c) (h : Pairwise R (x :: xs)) (ha : R a x) : Pairwise R (a :: x :: xs) := by
+  apply Pairwise.cons _ h
+  intro y hy
+  simp at h
+  cases hy with
+  | head =>
+    exact ha
+  | tail _ hy =>
+    obtain ⟨h1, h2⟩ := h
+    specialize h1 y hy
+    exact R_trans ha h1
+
+theorem Sorted.cons (h : Sorted (x :: xs)) (ha : a ≤ x) : Sorted (a :: x :: xs) := Pairwise.cons_of_trans Int.le_trans h ha
+
+theorem Sorted.not_tail_of_le (h : ¬(x :: y :: xs).Sorted) (hxy : x ≤ y) : ¬ (y :: xs).Sorted := by
+  false_or_by_contra
+  apply h
+  exact cons ‹_› ‹_›
+
+def Sorted.not_sorted_idx (h : ¬ Sorted xs) : Nat := match xs with
+  | [] => nomatch h
+  | [_x] => by
+    simp at h
+  | (x :: y :: xs) =>
+    if hxy : x ≤ y then
+      1 + Sorted.not_sorted_idx (Sorted.not_tail_of_le h hxy)
+    else
+      1
+
+end List
+
+section main
+
+open IO
+
+def main : IO Unit := do
+  let stdin ← IO.getStdin
+  while true do
+    -- Read a list of integers from the stdin
+    let line ← stdin.getLine
+    let list := Int.ofNat <$> String.toNat! <$> (line |>.stripSuffix "\n" |>.split (· == ' '))
+    println s!"Your input: {list}"
+
+    -- Use the fact that Sorted is decidable
+    if h : list.Sorted then
+      -- In this branch `h` is a proof of `list.Sorted`.
+      let unique_elems : SortedList := SortedList.unique ⟨list, h⟩
+      println s!"Unique elements: {unique_elems}"
+
+    else
+      -- And here `h` is a proof of `¬ list.Sorted`.
+      let idx := List.Sorted.not_sorted_idx h
+      println s!"Input was not sorted at index {idx}"
+
+      -- Sort the list
+      let sorted_list := list.sort
+      println s!"Your input (sorted): {sorted_list.val}"
+
+      -- Get the unique elements
+      let unique_elems : SortedList := sorted_list.unique
+      println s!"Unique elements: {unique_elems}"

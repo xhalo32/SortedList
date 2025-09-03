@@ -1,6 +1,6 @@
 # SortedList
 
-This repository aims to experiment with _formally verifying_ both **functional** and **imperative** programs using the Lean proof assistant.
+This repository is an experiment with _formally verifying_ both **functional** and **imperative** programs using the Lean 4 proof assistant.
 
 ## Structure
 
@@ -9,7 +9,7 @@ This repository aims to experiment with _formally verifying_ both **functional**
     ```lean
     abbrev Sorted (l : List Int) := Pairwise (· ≤ ·) l
     ```
-- `Unique.lean` defines a naïve implementation of `unique : List Int -> List Int` recursively.
+- `Recursive.lean` defines `unique : List Int -> List Int` recursively.
 - `Lemmas.lean` contains a lot of technical proofs about "sorted list theory"
 - `SortedList.lean` defines a `SortedList` as a subtype of lists:
     ```lean
@@ -31,18 +31,24 @@ This repository aims to experiment with _formally verifying_ both **functional**
 
         out
     ```
-    and proves that it satisfies the following specification:
+    and proves (`unique_spec`) that it satisfies the following specification:
     ```lean
-    ⦃⌜Sorted l⌝⦄ unique l ⦃⇓r => l ⊆ r ∧ StrictSorted r⦄
+    /-- The key properties that a `unique` function must have together defines its specification. -/
+    structure UniqueSpec (unique : List Int → List Int) where
+        /-- Every element in the input is in the output -/
+        supset : ∀ l, l ⊆ unique l
+        /-- Every element in the output is in the input -/
+        subset : ∀ l, unique l ⊆ l
+        /-- The output is sorted if the input is sorted -/
+        sorted_if_sorted : ∀ l, (Sorted l) → Sorted (unique l)
+        /-- The output contains no duplicates if the input is sorted -/
+        nodup_if_sorted : ∀ l, (Sorted l) → Nodup (unique l)
     ```
-    which states that given a sorted list as input, `unique` returns a list with the following properties:
-    - every element in the input is in the output, and
-    - the output is strictly increasing (or equivalently, doesn't contain duplicates and is sorted).
 
 ## Getting started
 
 1. Install Lean (`nix-shell -p elan` and `elan default stable`)
-2. Run `lake exe sortedlist`
+2. Run `lake exe main`
 
 Sample run:
 

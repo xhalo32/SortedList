@@ -1,5 +1,8 @@
 import SortedList.Lemmas
-import SortedList.Decidable
+
+/-!
+A "functional", i.e. recursive version of the imperative unique function
+-/
 
 namespace List
 

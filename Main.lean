@@ -16,7 +16,7 @@ def main : IO Unit := do
     -- Use the fact that Sorted is decidable
     if h : list.Sorted then
       -- In this branch `h` is a proof of `list.Sorted`.
-      let unique_elems := unique ⟨list, h⟩
+      let unique_elems : SortedList := SortedList.unique ⟨list, h⟩
       println s!"Unique elements: {unique_elems}"
 
     else
@@ -29,5 +29,5 @@ def main : IO Unit := do
       println s!"Your input (sorted): {sorted_list.val}"
 
       -- Get the unique elements
-      let unique_elems := unique sorted_list
+      let unique_elems : SortedList := sorted_list.unique
       println s!"Unique elements: {unique_elems}"

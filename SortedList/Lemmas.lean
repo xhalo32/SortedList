@@ -58,7 +58,7 @@ theorem dropWhile_sizeOf_le {xs : List Int} : sizeOf (xs.dropWhile f) ≤ sizeOf
     simp only [dropWhile_nil, nil.sizeOf_spec]
     exact Nat.le_refl _
   | cons y xs tail_ih =>
-    simp only [dropWhile_cons, beq_iff_eq]
+    simp only [dropWhile_cons]
     split
     · apply Nat.le_trans tail_ih
       simp only [cons.sizeOf_spec]
@@ -117,3 +117,30 @@ theorem append_sorted_of_forall_le (hxs : xs.Sorted) (hys : (y :: ys).Sorted) (h
   rw [pairwise_append]
   simp_all
   grind
+
+theorem Sorted.not_tail_of_le (h : ¬(x :: y :: xs).Sorted) (hxy : x ≤ y) : ¬ (y :: xs).Sorted := by
+  false_or_by_contra
+  apply h
+  exact cons ‹_› ‹_›
+
+/-- Computes the index of the first out of order element.
+
+Requires a proof that the list is not sorted.
+
+For example, for the list `[1, 2, 1]`, the index computed is 2.
+-/
+def Sorted.not_sorted_idx (h : ¬ Sorted xs) : Nat := match xs with
+  | [] => nomatch h
+  | [_x] => by
+    simp at h
+  | (x :: y :: xs) =>
+    if hxy : x ≤ y then
+      1 + Sorted.not_sorted_idx (Sorted.not_tail_of_le h hxy)
+    else
+      1
+
+
+-- `by decide` is used to prove that `¬ Sorted [1, 0]` using decidability.
+example : @Sorted.not_sorted_idx [1, 0] (by decide) = 1 := rfl
+
+example : @Sorted.not_sorted_idx [1, 2, 1] (by decide) = 2 := rfl

@@ -1,10 +1,11 @@
-import SortedList.Unique
+import SortedList.Lemmas
+import SortedList.Imperative
 
 /-
 Now let's define List.sort for sorting a list and providing a proof that it is sorted
 -/
 
-def SortedList := { l : List Int // l.Sorted }
+abbrev SortedList := { l : List Int // l.Sorted }
 
 namespace SortedList
 open List
@@ -83,7 +84,7 @@ def cons'.sorted (x : Int) (xs : SortedList) : Sorted (cons' x xs) := by
 def cons (x : Int) (xs : SortedList) : SortedList := ⟨insert x xs.1, cons'.sorted _ _⟩
 
 /-- Given a `SortedList`, returns the list of its unique elements. -/
-def unique (l : SortedList) : List Int := l.val.unique l.property
+def unique (l : SortedList) : SortedList := ⟨_root_.unique l.val, unique_spec.sorted_if_sorted _ l.property⟩
 
 end SortedList
 

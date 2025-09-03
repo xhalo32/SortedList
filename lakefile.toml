@@ -6,5 +6,9 @@ defaultTargets = ["sortedlist"]
 name = "SortedList"
 
 [[lean_exe]]
-name = "sortedlist"
+name = "main"
 root = "Main"
+
+[[lean_exe]]
+name = "closure"
+root = "MainClosure"
