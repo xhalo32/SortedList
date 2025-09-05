@@ -2,6 +2,8 @@ import Std.Tactic.Do
 
 open Std Do List
 
+set_option mvcgen.warning false
+
 /-- Given a list, returns the list of its unique elements **assuming** the list is in order.
 
 Use `SortedList` API instead: `SortedList.unique : SortedList → SortedList`.
@@ -37,40 +39,6 @@ structure UniqueSpec (unique : List Int → List Int) where
   sorted_if_sorted : ∀ l, (Sorted l) → Sorted (unique l)
   /-- The output contains no duplicates if the input is sorted -/
   nodup_if_sorted : ∀ l, (Sorted l) → Nodup (unique l)
-
-theorem unique_spec_supset (l : List Int) : l ⊆ unique l := by
-  generalize h : unique l = r
-  apply Id.of_wp_run_eq h _
-
-  -- Using the monadic verification condition generator, we can split the proof into 4 steps.
-  mvcgen
-
-  -- First, we need to provide an invariant that holds before, during, and after the for loop.
-  case inv1 =>
-    exact ⇓⟨xs, c, out⟩ =>
-      ⌜ (∀ x, some x = c → x ∈ out) ∧ -- First invariant: c is always in out
-        xs.prefix ⊆ out ⌝ -- Second invariant: main property (`l ⊆ unique l`) holds for out
-
-  -- We can simplify all goals to see the individual steps better
-  -- clear c out
-  -- obtain ⟨c, out⟩ := b
-  all_goals dsimp at *
-  -- all_goals simp only [reverse_subset, true_imp_iff] at *
-
-  -- The first two goals state that assuming that the invariant holds before the loop iteration (`h`), the invariant holds after the loop iteration.
-  -- There are two goals to analyze both code branches of `if some x != c then ...`
-  -- The next goal `pre1` states that the invariant holds before the loop.
-
-  -- Proof automation takes care of the first three goals.
-  all_goals simp_all
-  case step.isTrue => grind
-  case step.isFalse => grind
-
-  -- The last goal states that if the loop condition holds after the loop, the main statement `l ⊆ unique l` holds.
-  case post.success =>
-    intro inv1 inv2
-    simp only [wp, Id.run, PredTrans.pure_apply]
-    exact inv2
 
 theorem unique_spec_subset (l : List Int) : unique l ⊆ l := by
   generalize h : unique l = r

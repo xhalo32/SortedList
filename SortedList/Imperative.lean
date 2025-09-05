@@ -26,6 +26,9 @@ def unique (xs : List Int) : List Int := Id.run do
 
 #eval unique [1, 1, 2, 2, 3]
 
+-- We will prove the first property of `unique` using more verbose deduction steps.
+-- For the rest of the steps we use stronger proof automation like `simp_all` and `grind`.
+
 theorem unique_spec_supset (l : List Int) : l ⊆ unique l := by
   generalize h : unique l = r
   apply Id.of_wp_run_eq h _
@@ -40,23 +43,52 @@ theorem unique_spec_supset (l : List Int) : l ⊆ unique l := by
         xs.prefix ⊆ out ⌝ -- Second invariant: main property (`l ⊆ unique l`) holds for out
 
   -- We can simplify all goals to see the individual steps better
-  -- clear c out
-  -- obtain ⟨c, out⟩ := b
-  all_goals dsimp at *
-  -- all_goals simp only [reverse_subset, true_imp_iff] at *
+  all_goals dsimp at *; expose_names; try subst c out
 
-  -- The first two goals state that assuming that the invariant holds before the loop iteration (`h`), the invariant holds after the loop iteration.
-  -- There are two goals to analyze both code branches of `if some x != c then ...`
-  -- The next goal `pre1` states that the invariant holds before the loop.
+  -- The first goal states that the loop invariant holds before the loop
+  case pre =>
+    constructor
+    · intro x hx
+      nomatch hx -- `some x = none` is impossible
+    · exact nil_subset _
 
-  -- Proof automation takes care of the first three goals.
-  all_goals simp_all
-  case step.isTrue => grind
-  case step.isFalse => grind
+  -- The next goal states that if
+  --   1. the loop invariant holds for the previous loop, and
+  --   2. we go into the `if`
+  -- then the loop invariant holds after the loop.
+  case step.isTrue =>
+    rcases b with ⟨c, out⟩
+    dsimp at *
+    constructor
+    · intro x hx
+      simp at hx
+      rw [hx]
+      simp
+    · simp
+      apply subset_append_of_subset_left
+      exact h_3.2 -- Second invariant
 
-  -- The last goal states that if the loop condition holds after the loop, the main statement `l ⊆ unique l` holds.
+  -- This goal states that if
+  --   1. the loop invariant holds for the previous loop, and
+  --   2. we do not go into the `if` (i.e. do nothing in the loop)
+  -- then the loop invariant holds after the loop.
+  case step.isFalse =>
+    rcases b with ⟨c, out⟩
+    dsimp at *
+    constructor
+    · intro x hx
+      apply h_3.1 -- First invariant
+      exact hx
+    · simp
+      constructor
+      · exact h_3.2 -- Second invariant
+      · apply h_3.1 -- First invariant again
+        simp at h_2
+        exact h_2 -- We did not have `some x != c`, therefore `some x = c`
+
+  -- The last goal states that if the loop invariant holds after the loop, the main statement `l ⊆ unique l` holds.
   case post.success =>
-    intro inv1 inv2
+    rintro ⟨inv1, inv2⟩
     simp only [wp, Id.run, PredTrans.pure_apply]
     exact inv2
 
@@ -131,13 +163,18 @@ theorem unique_nodup (l : List Int) (hl : Sorted l) : Nodup (unique l) := by
   exact unique_spec_strictSorted l hl
 
 /-- Main statement: `unique` satisfies the specification. -/
-theorem unique_spec : UniqueSpec unique := by
-  constructor <;> intro l
-  · exact unique_spec_supset l
-  · exact unique_spec_subset l
-  · intro hl
+theorem unique_spec : UniqueSpec unique where
+  supset := by
+    intro l
+    exact unique_spec_supset l
+  subset := by
+    intro l
+    exact unique_spec_subset l
+  sorted_if_sorted := by
+    intro l hl
     apply StrictSorted.sorted
     exact unique_spec_strictSorted l hl
-  · intro hl
+  nodup_if_sorted := by
+    intro l hl
     apply StrictSorted.nodup
     exact unique_spec_strictSorted l hl
