@@ -79,6 +79,8 @@ theorem unique_spec_supset (l : List Int) : l ⊆ unique l := by
 
   -- The last goal states that if the loop invariant holds after the loop, the main statement `l ⊆ unique l` holds.
   case post.success =>
+    rcases r_1 with ⟨c, out⟩
+    dsimp
     rintro ⟨inv1, inv2⟩
     simp only [wp, Id.run, PredTrans.pure_apply]
     exact inv2
