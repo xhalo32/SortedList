@@ -29,44 +29,9 @@ Here `2 ≤ 3` comes from the requirement that the tail is sorted: `Sorted [2, 3
 -/
 abbrev Sorted (l : List Int) := Pairwise (· ≤ ·) l
 
-/-- The key properties that a `unique` function must have together defines its specification. -/
-structure UniqueSpec (unique : List Int → List Int) where
-  /-- Every element in the input is in the output -/
-  supset : ∀ l, l ⊆ unique l
-  /-- Every element in the output is in the input -/
-  subset : ∀ l, unique l ⊆ l
-  /-- The output is sorted if the input is sorted -/
-  sorted_if_sorted : ∀ l, (Sorted l) → Sorted (unique l)
-  /-- The output contains no duplicates if the input is sorted -/
-  nodup_if_sorted : ∀ l, (Sorted l) → Nodup (unique l)
+abbrev StrictSorted (l : List Int) := Pairwise (· < ·) l
 
-theorem unique_spec_subset (l : List Int) : unique l ⊆ l := by
-  generalize h : unique l = r
-  apply Id.of_wp_run_eq h _
-  mvcgen
-  case inv1 =>
-    exact ⇓⟨xs, c, out⟩ =>
-      ⌜ (∀ x, some x = c → x ∈ out) ∧ -- c is always in out
-        out ⊆ xs.prefix ⌝ -- property holds for out
-
-  all_goals simp_all
-  case step.isTrue => grind
-  case step.isFalse => grind
-
-  case post.success =>
-    intro h1 h2
-    exact h2
-
--- A list is strictly sorted if every element is strictly less than the next
-abbrev StrictSorted (xs : List Int) := Pairwise (· < ·) xs
-
-theorem StrictSorted.sorted (h : StrictSorted xs) : Sorted xs := by
-  grind [= pairwise_iff_forall_sublist]
-
-theorem StrictSorted.nodup (h : StrictSorted xs) : Nodup xs := by
-  grind [= pairwise_iff_forall_sublist]
-
-theorem StrictSorted.iff : StrictSorted xs ↔ Sorted xs ∧ Nodup xs := by
+theorem StrictSorted.sorted (h : StrictSorted l) : Sorted l := by
   grind [= pairwise_iff_forall_sublist]
 
 /-- Key lemma: Given a sorted list as input, `unique` returns a strictly sorted list. -/
@@ -104,24 +69,6 @@ theorem unique_spec_strictSorted (l : List Int) (hl : Sorted l) : StrictSorted (
     intros
     assumption
 
-
-/-- An example for composing above results -/
-theorem unique_nodup (l : List Int) (hl : Sorted l) : Nodup (unique l) := by
-  apply StrictSorted.nodup
-  exact unique_spec_strictSorted l hl
-
-/-- Main statement: `unique` satisfies the specification. -/
-theorem unique_spec : UniqueSpec unique := by
-  constructor <;> intro l
-  · exact unique_spec_supset l
-  · exact unique_spec_subset l
-  · intro hl
-    apply StrictSorted.sorted
-    exact unique_spec_strictSorted l hl
-  · intro hl
-    apply StrictSorted.nodup
-    exact unique_spec_strictSorted l hl
-
 end List
 
 abbrev SortedList := { l : List Int // l.Sorted }
@@ -130,7 +77,7 @@ abbrev SortedList := { l : List Int // l.Sorted }
 
 This is the "refined" version of the `unique` function.
 -/
-def SortedList.unique (l : SortedList) : SortedList := ⟨_root_.unique l.val, unique_spec.sorted_if_sorted _ l.property⟩
+def SortedList.unique (l : SortedList) : SortedList := ⟨_root_.unique l.val, (unique_spec_strictSorted _ l.property).sorted⟩
 
 /-- `List.mergeSort` returns a `Sorted` list -/
 theorem Sorted.mergeSort (l : List Int) : Sorted (l.mergeSort) := by

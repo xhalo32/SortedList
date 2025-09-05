@@ -4,10 +4,7 @@ open Std Do List
 
 set_option mvcgen.warning false
 
-/-- Given a list, returns the list of its unique elements **assuming** the list is in order.
-
-Use `SortedList` API instead: `SortedList.unique : SortedList → SortedList`.
--/
+/-- Given a list, returns the list of its unique elements **assuming** the list is in order. -/
 private def unique (xs : List Int) : List Int := Id.run do
   let mut c : Option Int := none -- previous x in the list
   let mut out := [] -- output of the function
